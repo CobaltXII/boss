@@ -100,4 +100,14 @@ public:
 		if (!video)
 			barf("Could not allocate video memory.");
 	}
+	
+	// Video output function.
+	void push() {
+		// Update the SDL_Texture*.
+		SDL_UpdateTexture(sdl_texture, NULL, video, x_res * sizeof(Uint32));
+		// Copy the SDL_Texture* to the SDL_Renderer*.
+		SDL_RenderCopy(sdl_renderer, sdl_texture, NULL, NULL);
+		// Update the SDL_Renderer*.
+		SDL_RenderPresent(sdl_renderer);
+	}
 };
