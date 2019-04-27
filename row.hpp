@@ -30,4 +30,23 @@ public:
 			push_back(row[i]);
 		}
 	}
+
+	// Insert a string into this row at the specified position.
+	void insert_str(unsigned int index,
+					std::string element,
+					unsigned char foreground = vga_gray,
+					unsigned char background = vga_black)
+	{
+		for (unsigned int i = 0; i < element.size(); i++) {
+			// Generate a glyph.
+			glyph glyph = {
+				element[element.size() - i - 1],
+				foreground,
+				background
+			};
+
+			// Insert the glyph.
+			insert(begin() + index, glyph);
+		}
+	}
 };
