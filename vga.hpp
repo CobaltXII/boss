@@ -1,0 +1,4 @@
+// VGA tones.
+unsigned char vga_tone[] = {
+	0x00, 0x55, 0xAA, 0xFF
+};
