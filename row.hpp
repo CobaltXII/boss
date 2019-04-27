@@ -23,4 +23,11 @@ public:
 		}
 		return str;
 	}
+
+	// Append a row to the end of this row.
+	void append(row row) {
+		for (unsigned int i = 0; i < row.size(); i++) {
+			push_back(row[i]);
+		}
+	}
 };
