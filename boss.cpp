@@ -196,4 +196,264 @@ void editor::update(int row_index) {
 		}
 	}
 }
+
+// Keypress handler.
+void editor::key(SDL_Event e) {
+	if (e.type == SDL_KEYDOWN) {
+		SDL_Keycode key = e.key.keysym.sym;
+
+		// Handle keys with a left-control modifier.
+		if (e.key.keysym.mod == KMOD_LCTRL) {
+			bool realloc_text = true;
+			if (key == SDLK_1) {
+				// Switch text mode font to 8x8.
+				if (vga_001_y_res != 8) {
+					// Resize the text buffer.
+					float resize = 8.0f / float(vga_001_y_res);
+					vga_text_mode_y_res /= resize;
+					// Set the font.
+					vga_001 = vga_8x8;
+					vga_001_x_res = 8;
+					vga_001_y_res = 8;
+				}
+			} else if (key == SDLK_2) {
+				// Switch text mode font to 8x16.
+				if (vga_001_y_res != 16) {
+					// Resize the text buffer.
+					float resize = 16.0f / float(vga_001_y_res);
+					vga_text_mode_y_res /= resize;
+					// Set the font.
+					vga_001 = vga_8x16;
+					vga_001_x_res = 8;
+					vga_001_y_res = 16;
+				}
+			} else if (key == SDLK_3) {
+				// Switch text mode font to 8x32.
+				if (vga_001_y_res != 32) {
+					// Resize the text buffer.
+					float resize = 32.0f / float(vga_001_y_res);
+					vga_text_mode_y_res /= resize;
+					// Set the font.
+					vga_001 = vga_8x32;
+					vga_001_x_res = 8;
+					vga_001_y_res = 32;
+				}
+			} else {
+				realloc_text = false;
+			}
+
+			if (key == SDLK_v) {
+				// Paste text.
+				std::string text = SDL_GetClipboardText();
+				std::stringstream text_stream(text);
+				std::vector<std::string> lines;
+				std::string line;
+				while (std::getline(text_stream, line)) {
+					lines.push_back(line);
+				}
+				if (lines.size() == 1) {
+					rows[cursor_y].insert_str(cursor_x, lines[0]);
+					cursor_x += text.size();
+				} else if (lines.size() > 1) {
+					rows[cursor_y].insert_str(cursor_x, lines[0]);
+					for (int i = 1; i < lines.size(); i++) {
+						rows.insert(rows.begin() + ++cursor_y, row(lines[i]));
+						update(cursor_y);
+					}
+					cursor_x = rows[cursor_y].size();
+				}
+			} else if (key == SDLK_s) {
+				// Save the file.
+				std::ofstream file(filename);
+				if (file.is_open()) {
+					for (int i = 0; i < rows.size(); i++) {
+						file << rows[i].to_string();
+						if (i < rows.size() - 1) {
+							file << '\n';
+						}
+					}
+					file.close();
+				}
+			}
+
+			if (realloc_text) {
+				// Reallocate the text buffer.
+				free(text);
+				text = (glyph*)malloc(
+					vga_text_mode_x_res *
+					vga_text_mode_y_res *
+					sizeof(glyph)
+				);
+			}
+
+			// Scroll up if the cursor is above the viewport.
+			if (cursor_y < scroll_y) {
+				while (cursor_y < scroll_y) {
+					scroll_y--;
+				}
+			}
+
+			// Scroll down if the cursor is below the viewport.
+			if (cursor_y + 2 > vga_text_mode_y_res + scroll_y) {
+				while (cursor_y + 2 > vga_text_mode_y_res + scroll_y) {
+					scroll_y++;
+				}
+			}
+		}
+
+		// Handle SDLK_BACKSPACE.
+		if (key == SDLK_BACKSPACE) {
+			if (rows[cursor_y].size() < 1 && cursor_y > 0) {
+				// Line is empty, so remove the line, and move the cursor to the
+				// end of the upper line.
+				rows.erase(rows.begin() + cursor_y--);
+				cursor_x = rows[cursor_y].size();
+			} else {
+				// Line is not empty.
+				if (cursor_x == 0) {
+					// Cursor is on the first character, so remove the line, add
+					// it to the end of the upper line and move the cursor to
+					// the previous end of the upper line.
+					if (cursor_y <= 0) {
+						return;
+					}
+					cursor_x = rows[cursor_y - 1].size();
+					rows[cursor_y - 1].append(rows[cursor_y]);
+					rows.erase(rows.begin() + cursor_y);
+					cursor_y--;
+				} else {
+					// Cursor is not on the first character, so remove the
+					// character before the cursor, and move the cursor to the
+					// left.
+					rows[cursor_y].erase(rows[cursor_y].begin() + cursor_x - 1);
+					cursor_x--;
+				}
+			}
+			// Scroll up if the cursor is above the viewport.
+			if (cursor_y < scroll_y) {
+				scroll_y--;
+			}
+		}
+
+		// Handle SDLK_RETURN.
+		else if (key == SDLK_RETURN) {
+			if (cursor_x == 0) {
+				// Cursor is at the start of the row. Create a new row above the
+				// cursor and move the cursor down.
+				rows.insert(rows.begin() + cursor_y++, row());
+			} else if (cursor_x == rows[cursor_y].size()) {
+				// Cursor is at the end of the row. Create a new row below the
+				// cursor and move the cursor down.
+				rows.insert(rows.begin() + ++cursor_y, row());
+			} else {
+				// Cursor is somewhere inside the row. Split the row and move
+				// the right half to another line (below the current line). Then
+				// remove the right half from the current line. Finally, move
+				// the cursor to the start of the first line.
+				row row_right = rows[cursor_y].split(cursor_x);
+				rows.insert(rows.begin() + ++cursor_y, row_right);
+				cursor_x = 0;
+			}
+			// Scroll down if the cursor is below the viewport.
+			if (cursor_y + 2 > vga_text_mode_y_res + scroll_y) {
+				scroll_y++;
+			}
+		}
+
+		// Handle SDLK_TAB.
+		else if (key == SDLK_TAB) {
+			rows[cursor_y].insert_str(cursor_x++, "\t");
+		}
+
+		// Handle SDLK_LEFT.
+		else if (key == SDLK_LEFT) {
+			cursor_x--;
+			if (cursor_x == -1) {
+				if (cursor_y != 0) {
+					cursor_x = rows[--cursor_y].size();
+				} else {
+					cursor_x = 0;
+				}
+			}
+			// Scroll up if the cursor is above the viewport.
+			if (cursor_y < scroll_y) {
+				scroll_y--;
+			}
+		}
+		// Handle SDLK_RIGHT.
+		else if (key == SDLK_RIGHT) {
+			cursor_x++;
+			if (cursor_x > rows[cursor_y].size()) {
+				if (cursor_y + 1 < rows.size()) {
+					cursor_x = 0;
+					cursor_y++;
+				}
+			}
+			// Scroll down if the cursor is below the viewport.
+			if (cursor_y + 2 > vga_text_mode_y_res + scroll_y) {
+				scroll_y++;
+			}
+		}
+
+		// Handle SDLK_UP.
+		else if (key == SDLK_UP) {
+			cursor_y--;
+			// Scroll up if the cursor is above the viewport.
+			if (cursor_y < scroll_y) {
+				scroll_y--;
+			}
+		}
+		// Handle SDLK_DOWN.
+		else if (key == SDLK_DOWN) {
+			cursor_y++;
+			// Scroll down if the cursor is below the viewport.
+			if (cursor_y + 2 > vga_text_mode_y_res + scroll_y) {
+				scroll_y++;
+			}
+		}
+
+		else {
+			return;
+		}
+	}
+	else if (e.type == SDL_TEXTINPUT) {
+		// Insert the inputted text into the current row at the current position
+		// of the cursor, and move the cursor to the right.
+		rows[cursor_y].insert_str(cursor_x, e.text.text);
+		cursor_x += strlen(e.text.text);
+	}
+	else {
+		return;
+	}
+
+	// Clamp cursor_x and cursor_y.
+	if (cursor_y < 0) {
+		cursor_y = 0;
+	} else if (cursor_y >= rows.size()) {
+		cursor_y = rows.size() - 1;
+	}
+
+	if (cursor_x > rows[cursor_y].size()) {
+		cursor_x = rows[cursor_y].size();
+	}
+	if (cursor_x < 0) {
+		cursor_x = 0;
+	}
+
+	// Clamp scroll_x and scroll_y.
+	if (scroll_x < 0) {
+		scroll_x = 0;
+	}
+	if (scroll_y < 0) {
+		scroll_y = 0;
+	}
+
+	// Update the current, upper, and lower rows.
+	update(cursor_y);
+	update(cursor_y - 1);
+	update(cursor_y + 1);
+
+	// Set the motion tick value to the current tick to prevent blinking for the
+	// next few frames.
+	motion_tick = SDL_GetTicks();
 }
