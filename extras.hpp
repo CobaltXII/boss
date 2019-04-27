@@ -6,3 +6,13 @@ void barf(std::string error) {
 	std::cout << error << std::endl;
 	exit(-1);
 }
+
+#ifdef MATRIX_EFFECT
+// Falling character.
+struct hackerman {
+	char ascii;
+	int x;
+	float y;
+	float vy;
+};
+#endif

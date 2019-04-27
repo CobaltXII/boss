@@ -39,6 +39,11 @@ struct editor {
 	// polled. The key handler will set this flag to true.
 	bool save_video = false;
 
+	#ifdef MATRIX_EFFECT
+	// A vector of falling characters.
+	std::vector<hackerman> hackermen;
+	#endif
+
 	// Text buffer glyph assignment function. Bounds checking is implemented in
 	// this function.
 	void word(int x,

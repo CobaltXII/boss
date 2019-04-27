@@ -486,7 +486,7 @@ void editor::render() {
 		row row = rows[j];
 		// Print the current row to the text buffer.
 		for (unsigned int i = 0; i < row.size(); i++) {
-			// Fetch the current glyph
+			// Fetch the current glyph.
 			glyph glyph = row[i];
 			// Handle tabs.
 			if (glyph.ascii == '\t') {
@@ -582,6 +582,22 @@ void editor::render() {
 		};
 		word(vga_text_mode_x_res - 8 - status.size() + i, 0, glyph);
 	}
+
+	#ifdef MATRIX_EFFECT
+	// Print the falling characters.
+	for (int i = 0; i < hackermen.size(); i++) {
+		hackerman hacker = hackermen[i];
+		int x = hacker.x;
+		int y = int(hacker.y) % vga_text_mode_y_res;
+		// Print the falling character.
+		if ((text[y * vga_text_mode_x_res + x].ascii == ' ' ||
+			text[y * vga_text_mode_x_res + x].ascii == 0) &&
+			text[y * vga_text_mode_x_res + x].bg == vga_black)
+		{
+			word(x, y, {hacker.ascii, vga_dark_gray, vga_black});
+		}
+	}
+	#endif
 }
 
 // Entry point.
@@ -677,6 +693,18 @@ int main(int argc, char** argv) {
 
 	// Reset the text buffer.
 	boss.render();
+
+	#ifdef MATRIX_EFFECT
+	// Generate the falling characters.
+	for (int i = 0; i < 128; i++) {
+		boss.hackermen.push_back({
+			char((unsigned char)(rand() % 256)),
+			rand() % boss.vga_text_mode_x_res,
+			float(rand() % boss.vga_text_mode_y_res),
+			float(rand()) / float(RAND_MAX) * 0.1f + 0.1f
+		});
+	}
+	#endif
 	
 	// Start the VGA text mode emulator.
 	boss.raster(&adapter);
@@ -714,6 +742,15 @@ int main(int argc, char** argv) {
 		}
 		// Push the video buffer to the video card.
 		adapter.push();
+
+		#ifdef MATRIX_EFFECT
+		// Update the falling characters.
+		for (int i = 0; i < boss.hackermen.size(); i++) {
+			hackerman& hacker = boss.hackermen[i];
+			hacker.ascii = (hacker.ascii + 1) % 256;
+			hacker.y += hacker.vy;
+		}
+		#endif
 	}
 	
 	return 0;
