@@ -110,4 +110,21 @@ public:
 		// Update the SDL_Renderer*.
 		SDL_RenderPresent(sdl_renderer);
 	}
+
+	// Save the video buffer as a .bmp file.
+	void save_bmp(std::string filename) {
+		// Create a SDL_Surface* from the video memory.
+		SDL_Surface* surface = SDL_CreateRGBSurfaceFrom(
+			video,
+			x_res,
+			y_res,
+			32,
+			x_res * 4,
+			0, 0, 0, 0
+		);
+		// Save the SDL_Surface*.
+		SDL_SaveBMP(surface, filename.c_str());
+		// Free the SDL_Surface*.
+		SDL_FreeSurface(surface);
+	}
 };
