@@ -39,3 +39,59 @@ unsigned char* decompress(unsigned char* font,
 	
 	return out;
 }
+
+// 8x8 VGA compressed text mode font (ASCII).
+unsigned char cmp_vga_8x8[] = {
+#include "8x8.inc"
+};
+
+// 8x8 VGA uncompressed text mode font (ASCII).
+unsigned char* vga_8x8 = decompress(cmp_vga_8x8, 8, 8);
+
+// 8x10 VGA compressed text mode font (ASCII).
+unsigned char cmp_vga_8x10[] = {
+#include "8x10.inc"
+};
+
+// 8x10 VGA uncompressed text mode font (ASCII).
+unsigned char* vga_8x10 = decompress(cmp_vga_8x10, 8, 10);
+
+// 8x12 VGA compressed text mode font (ASCII).
+unsigned char cmp_vga_8x12[] = {
+#include "8x12.inc"
+};
+
+// 8x12 VGA uncompressed text mode font (ASCII).
+unsigned char* vga_8x12 = decompress(cmp_vga_8x12, 8, 12);
+
+// 8x14 VGA compressed text mode font (ASCII).
+unsigned char cmp_vga_8x14[] = {
+#include "8x14.inc"
+};
+
+// 8x14 VGA uncompressed text mode font (ASCII).
+unsigned char* vga_8x14 = decompress(cmp_vga_8x14, 8, 14);
+
+// 8x15 VGA compressed text mode font (ASCII).
+unsigned char cmp_vga_8x15[] = {
+#include "8x15.inc"
+};
+
+// 8x15 VGA uncompressed text mode font (ASCII).
+unsigned char* vga_8x15 = decompress(cmp_vga_8x15, 8, 15);
+
+// 8x16 VGA compressed text mode font (ASCII).
+unsigned char cmp_vga_8x16[] = {
+#include "8x16.inc"
+};
+
+// 8x16 VGA uncompressed text mode font (ASCII).
+unsigned char* vga_8x16 = decompress(cmp_vga_8x16, 8, 16);
+
+// 8x32 VGA compressed text mode font (ASCII).
+unsigned char cmp_vga_8x32[] = {
+#include "8x32.inc"
+};
+
+// 8x32 VGA uncompressed text mode font (ASCII).
+unsigned char* vga_8x32 = decompress(cmp_vga_8x32, 8, 32);
