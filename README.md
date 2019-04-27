@@ -1,6 +1,6 @@
 # BOSS
 
-![Alt text](https://github.com/CobaltXII/boss/blob/master/boss.png?raw=true)
+![Alt text](https://github.com/CobaltXII/boss/blob/master/boss_2.png?raw=true)
 
 BOSS is a text editor written for fun and profit. It is not recommended to use BOSS for serious editing, although it is certainly possible, if tedious. It's source code is meant to be readable, short and functional, so that anybody who wants to modify it for themselves can do so quickly and easily.
 
