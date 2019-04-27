@@ -457,3 +457,124 @@ void editor::key(SDL_Event e) {
 	// next few frames.
 	motion_tick = SDL_GetTicks();
 }
+
+// Render the current state to the text buffer.
+void editor::render() {
+	// Calculate the length of the text buffer.
+	int text_length = (
+		vga_text_mode_x_res *
+		vga_text_mode_y_res *
+		sizeof(glyph)
+	);
+
+	// Clear the text buffer.
+	memset(text, 0, text_length);
+
+	// Store the printer head's Y position.
+	int y = scroll_y;
+	// Print all of the rows to the text buffer.
+	for (unsigned int j = scroll_y; j < rows.size(); j++) {
+		// Store the printer head's X position.
+		int x = 8;
+
+		// Fetch the current row.
+		row row = rows[j];
+		// Print the current row to the text buffer.
+		for (unsigned int i = 0; i < row.size(); i++) {
+			// Fetch the current glyph
+			glyph glyph = row[i];
+			// Handle tabs.
+			if (glyph.ascii == '\t') {
+				x = (x / 4) * 4 + 4;
+				continue;
+			}
+			// Handle regular characters.
+			word(
+				x - scroll_x,
+				y - scroll_y + 1,
+				glyph
+			);
+			// Increment the printer head's X position.
+			x++;
+		}
+
+		// Print the filler for the right-aligned line number.
+		for (int i = 0; i < 8; i++) {
+			word(i, y - scroll_y + 1, {' ', vga_gray, vga_black});
+		}
+
+		// Print the right-aligned line number.
+		std::string line_number = std::to_string(j + 1);
+		for (unsigned int i = 0; i < line_number.size(); i++) {
+			glyph glyph = {
+				line_number[i],
+				vga_gray,
+				vga_black
+			};
+			word(7 - line_number.size() + i, y - scroll_y + 1, glyph);
+		}
+
+		// Increment the printer head's Y position.
+		y++;
+
+		// Break if the printer head is outside the viewport.
+		if (y - scroll_y + 1 >= vga_text_mode_y_res) {
+			break;
+		}
+	}
+
+	// Draw the cursor if the blink timer allows it.
+	if ((SDL_GetTicks() - motion_tick) % 1000 < 500) {
+		// Find the real cursor X position. The cursor_x variable cannot be
+		// relied on because of wide characters (like tabs).
+		int real_cursor_x = 0;
+		for (int i = 0; i < rows[cursor_y].size() && i < cursor_x; i++) {
+			if (rows[cursor_y][i].ascii == '\t') {
+				real_cursor_x = (real_cursor_x / 4) * 4 + 4;
+			} else {
+				real_cursor_x++;
+			}
+		}
+
+		// Draw the cursor.
+		word(
+			real_cursor_x - scroll_x + 8,
+			cursor_y - scroll_y + 1,
+			{
+				-37,
+				vga_gray,
+				vga_black
+			}
+		);
+	}
+
+	// Print the status bar background.
+	for (unsigned int i = 0; i < vga_text_mode_x_res; i++) {
+		word(i, 0, {' ', vga_black, vga_gray});
+	}
+
+	// Print the filename.
+	for (unsigned int i = 0; i < filename.size(); i++) {
+		word(i + 8, 0, {filename[i], vga_black, vga_gray});
+	}
+
+	// Print the syntax type abbreviation.
+	std::string syntax = "(" + highlight_mode_string[highlight] + ")";
+	for (unsigned int i = 0; i < syntax.size(); i++) {
+		word(i + 9 + filename.size(), 0, {syntax[i], vga_black, vga_gray});
+	}
+
+	// Print the line and column numbers.
+	std::stringstream status_stream;
+	status_stream << "Ln " << cursor_y + 1 << "/" << rows.size() << ", ";
+	status_stream << "Col " << cursor_x + 1;
+	std::string status = status_stream.str();
+	for (unsigned int i = 0; i < status.size(); i++) {
+		glyph glyph = {
+			status[i],
+			vga_black,
+			vga_gray
+		};
+		word(vga_text_mode_x_res - 8 - status.size() + i, 0, glyph);
+	}
+}
