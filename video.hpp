@@ -27,4 +27,10 @@ public:
 		// Exit.
 		exit(0);
 	}
+	
+	// Set the value of a certain pixel of the video memory. No bounds
+	// checking is done in this function.
+	inline void set(int x, int y, Uint32 pixel) {
+		video[y * x_res + x] = pixel;
+	}
 };
