@@ -35,6 +35,10 @@ struct editor {
 	// The currently opened file's filename.
 	std::string filename;
 
+	// If CTRL-B is hit, the video buffer will be saved after all events are
+	// polled. The key handler will set this flag to true.
+	bool save_video = false;
+
 	// Text buffer glyph assignment function. Bounds checking is implemented in
 	// this function.
 	void word(int x,

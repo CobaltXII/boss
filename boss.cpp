@@ -9,9 +9,11 @@
  *
  */
 
+#include <ctime>
 #include <memory>
 #include <vector>
 #include <string>
+#include <iomanip>
 #include <sstream>
 #include <fstream>
 #include <iostream>
@@ -274,6 +276,9 @@ void editor::key(SDL_Event e) {
 					}
 					file.close();
 				}
+			} else if (key == SDLK_b) {
+				// Save the video buffer.
+				save_video = true;
 			}
 
 			if (realloc_text) {
@@ -695,6 +700,18 @@ int main(int argc, char** argv) {
 		boss.render();
 		// Rasterize the text mode buffer to the video buffer.
 		boss.raster(&adapter);
+		// Save the video buffer, if requested.
+		if (boss.save_video) {
+			boss.save_video = false;
+			// Get the current timestamp.
+			auto t = std::time(nullptr);
+			auto tm = *std::localtime(&t);
+			// Generate a filename with the current timestamp.
+			std::stringstream filename;
+			filename << "export_" << std::put_time(&tm, "%d-%m-%Y-%H-%M-%S");
+			// Save the video buffer as an image.
+			adapter.save_bmp("export_" + filename.str() + ".bmp");
+		}
 		// Push the video buffer to the video card.
 		adapter.push();
 	}
