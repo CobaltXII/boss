@@ -72,4 +72,29 @@ void editor::raster(video_interface* vga) {
 			}
 		}
 	}
+
+	// Draw Mario (8x16 mode only).
+	int mario_x = (SDL_GetTicks() / 15) % (vga->x_res + 32) - 16;
+	if (vga_001_y_res == 16) {
+		for (int x = 0; x < 16; x++) {
+			for (int y = 0; y < 16; y++) {
+				if (SDL_GetTicks() % 200 >= 100) {
+					if (mario[y][x] == '#') {
+						vga->set_safe(
+							x + mario_x, y,
+							vga_argb8888[vga_dark_gray]
+						);
+					}
+				} else {
+					if (mario[y][x + 16] == '#') {
+						vga->set_safe(
+							x + mario_x, y,
+							vga_argb8888[vga_dark_gray]
+						);
+					}
+				}
+			}
+		}
+	}
+}
 }
