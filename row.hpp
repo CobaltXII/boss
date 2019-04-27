@@ -49,4 +49,15 @@ public:
 			insert(begin() + index, glyph);
 		}
 	}
+
+	// Split this row at a certain index, and return the right side. Discard the
+	// right side from this row.
+	row split(unsigned int index) {
+		row right;
+		for (unsigned int i = index; i < size(); i++) {
+			right.push_back((*this)[i]);
+		}
+		erase(begin() + index, end());
+		return right;
+	}
 };
