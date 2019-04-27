@@ -32,3 +32,23 @@ Uint32 vga_argb8888[] = {
 	make_vga_argb8888(3, 3, 1),
 	make_vga_argb8888(3, 3, 3),
 };
+
+// The English names of all 16 VGA color combinations.
+enum vga_color {
+	vga_black,
+	vga_dark_blue,
+	vga_dark_green,
+	vga_dark_cyan,
+	vga_dark_red,
+	vga_dark_pink,
+	vga_dark_yellow,
+	vga_gray,
+	vga_dark_gray,
+	vga_blue,
+	vga_green,
+	vga_cyan,
+	vga_red,
+	vga_pink,
+	vga_yellow,
+	vga_white
+};
