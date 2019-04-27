@@ -13,4 +13,18 @@ public:
 	
 	// Video memory pointer.
 	Uint32* video = NULL;
+
+	// Quit.
+	void quit() {
+		// Free the video memory.
+		free(video);
+		// Destroy all SDL objects.
+		SDL_DestroyTexture(sdl_texture);
+		SDL_DestroyRenderer(sdl_renderer);
+		SDL_DestroyWindow(sdl_window);
+		// Quit SDL.
+		SDL_Quit();
+		// Exit.
+		exit(0);
+	}
 };
