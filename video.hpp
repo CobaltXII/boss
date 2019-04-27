@@ -33,4 +33,13 @@ public:
 	inline void set(int x, int y, Uint32 pixel) {
 		video[y * x_res + x] = pixel;
 	}
+
+	// Set the value of a certain pixel of the video memory. Bounds checking is
+	// done in this function.
+	inline void set_safe(int x, int y, Uint32 pixel) {
+		if (x >= 0 && x < x_res)
+		if (y >= 0 && y < y_res) {
+			video[y * x_res + x] = pixel;
+		}
+	}
 };
