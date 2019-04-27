@@ -578,3 +578,126 @@ void editor::render() {
 		word(vga_text_mode_x_res - 8 - status.size() + i, 0, glyph);
 	}
 }
+
+// Entry point.
+int main(int argc, char** argv) {
+	// Print the credits (for reference purposes).
+	std::cout << credits << std::endl;
+
+	// Parse command line arguments.
+	if (argc != 2) {
+		std::cout << "Usage: " << argv[0] << " <file>" << std::endl;
+		exit(-1);
+	}
+
+	// Create an editor.
+	editor boss = editor(90, 100);
+
+	// Parse the filename.
+	boss.filename = std::string(argv[1]);
+	// Find the syntax highlighting mode by comparing the end of the
+	// filename to many common file extensions.
+	for (int i = 0; i < sizeof(ext_hm_c) / sizeof(ext_hm_c[0]); i++) {
+		std::string suffix = ext_hm_c[i];
+		if (suffix.size() > boss.filename.size()) {
+			continue;
+		}
+		bool is_match = std::equal(
+			suffix.rbegin(),
+			suffix.rend(),
+			boss.filename.rbegin()
+		);
+		if (is_match) {
+			boss.highlight = hm_c;
+		}
+	}
+	for (int i = 0; i < sizeof(ext_hm_cpp) / sizeof(ext_hm_cpp[0]); i++) {
+		std::string suffix = ext_hm_cpp[i];
+		if (suffix.size() > boss.filename.size()) {
+			continue;
+		}
+		bool is_match = std::equal(
+			suffix.rbegin(),
+			suffix.rend(),
+			boss.filename.rbegin()
+		);
+		if (is_match) {
+			boss.highlight = hm_cpp;
+		}
+	}
+
+	load_file:
+	// Load a file (or start an empty file).
+	std::ifstream file(argv[1]);
+	// Verify that the file is open.
+	if (file.is_open()) {
+		// Load the file line by line.
+		std::string line;
+		while (std::getline(file, line)) {
+			boss.rows.push_back(row(line));
+			// Calculate the actual length of the line.
+			unsigned int length = 0;
+			for (int i = 0; i < line.length(); i++) {
+				if (line[i] == '\t') {
+					length = (length / 4) * 4 + 4;
+				} else {
+					length++;
+				}
+			}
+			// Resize the window to fit the row.
+			if (length + 10 > boss.vga_text_mode_x_res) {
+				boss.vga_text_mode_x_res = length + 10;
+			}
+		}
+	} else {
+		// Create a new file.
+		std::ofstream file(argv[1]);
+		file << std::endl;
+		file.close();
+		// Load the newly created file.
+		goto load_file;
+	}
+	
+	// Create a video_interface.
+	video_interface adapter = video_interface(
+		"BOSS",
+		boss.vga_text_mode_x_res * boss.vga_001_x_res,
+		boss.vga_text_mode_y_res * boss.vga_001_y_res
+	);
+
+	// Update all rows.
+	for (unsigned int i = 0; i < boss.rows.size(); i++) {
+		boss.update(i);
+	}
+
+	// Reset the text buffer.
+	boss.render();
+	
+	// Start the VGA text mode emulator.
+	boss.raster(&adapter);
+	adapter.push();
+	
+	// Run the VGA text mode emulator.
+	for (;;) {
+		// Poll input.
+		SDL_Event e;
+		while (SDL_PollEvent(&e) == SDL_TRUE) {
+			// Quit abruptly when requested.
+			if (e.type == SDL_QUIT) {
+				adapter.quit();
+			} else if (e.type == SDL_KEYDOWN) {
+				boss.key(e);
+			} else if (e.type == SDL_TEXTINPUT) {
+				boss.key(e);
+			}
+		}
+		// Render the current state to the text buffer.
+		boss.render();
+		// Rasterize the text mode buffer to the video buffer.
+		boss.raster(&adapter);
+		// Push the video buffer to the video card.
+		adapter.push();
+	}
+	
+	return 0;
+}
