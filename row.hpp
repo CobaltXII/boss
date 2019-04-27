@@ -14,4 +14,13 @@ public:
 			push_back({text[i], fg, bg});
 		}
 	}
+
+	// Conversion from row to std::string.
+	std::string to_string() {
+		std::string str;
+		for (int i = 0; i < size(); i++) {
+			str += (*this)[i].ascii;
+		}
+		return str;
+	}
 };
