@@ -27,13 +27,11 @@ unsigned char* decompress(unsigned char* font,
 		for (int j = 0; j != 8; j++) {
 			// Little-endian machines will load fonts horizontally flipped as
 			// the font is compiled as big-endian.
-			#ifdef __LITTLE_ENDIAN__
-			out[8 * i + (7 - j)] = (font[i] >> j) & 1;
-			#else
-			// If the machine is not little-endian (or the __LITTLE_ENDIAN__)
-			// flag is not set, the font will be read normally.
-			out[8 * i + j] = (font[i] >> j) & 1;
-			#endif
+			if (is_big_endian) {
+				out[8 * i + j] = (font[i] >> j) & 1;
+			} else {
+				out[8 * i + (7 - j)] = (font[i] >> j) & 1;
+			}
 		}
 	}
 	

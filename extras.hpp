@@ -16,3 +16,15 @@ struct hackerman {
 	float vy;
 };
 #endif
+
+// Find the endian-ness of the system.
+bool check_if_is_big_endian()
+{
+    union {
+        Uint32 i;
+        char c[4];
+    } endian = {0x01020304};
+
+    return endian.c[0] == 1;
+}
+bool is_big_endian = check_if_is_big_endian();
