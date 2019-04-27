@@ -21,3 +21,26 @@ namespace HI_c {
 std::string ext_hm_c[] = {
 	".c"
 };
+
+// Import syntax highlighting rules for C++.
+namespace HI_cpp {
+#include "syntax_cpp.hpp"
+}
+
+// All file extensions that use the hm_cpp rules.
+std::string ext_hm_cpp[] = {
+	".C",
+	".cc",
+	".cpp",
+	".CPP",
+	".c++",
+	".cp",
+	".cxx",
+	".H",
+	".hh",
+	".hpp",
+	".HPP",
+	".h++",
+	".hp",
+	".hxx"
+};
