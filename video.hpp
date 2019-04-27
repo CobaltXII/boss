@@ -42,4 +42,62 @@ public:
 			video[y * x_res + x] = pixel;
 		}
 	}
+	
+	// Default constructor.
+	video_interface(const char* title,
+					int x_res,
+					int y_res)
+	{
+		this->x_res = x_res;
+		this->y_res = y_res;
+		
+		// Create the SDL_Window*.
+		sdl_window = SDL_CreateWindow(
+			title,
+			// Let the operating system pick the window's position.
+			SDL_WINDOWPOS_UNDEFINED,
+			SDL_WINDOWPOS_UNDEFINED,
+			x_res,
+			y_res,
+			// This flag will cause pixels to be rendered correctly (without
+			// linear interpolation) on high-DPI displays.
+			SDL_WINDOW_ALLOW_HIGHDPI
+		);
+		
+		if (!sdl_window) {
+			barf("Could not create a SDL_Window*.");
+		}
+		
+		// Create the SDL_Renderer*.
+		sdl_renderer = SDL_CreateRenderer(
+			sdl_window,
+			-1,
+			// Some systems may have a GPU-accelerated renderer. On other
+			// systems the renderer will fall back to software.
+			SDL_RENDERER_ACCELERATED
+		);
+		
+		if (!sdl_renderer) {
+			barf("Could not create a SDL_Renderer*.");
+		}
+		
+		// Create the SDL_Texture*.
+		sdl_texture = SDL_CreateTexture(
+			sdl_renderer,
+			SDL_PIXELFORMAT_ARGB8888,
+			SDL_TEXTUREACCESS_STREAMING,
+			x_res,
+			y_res
+		);
+		
+		if (!sdl_texture) {
+			barf("Could not create a SDL_Texture*.");
+		}
+		
+		// Allocate video memory.
+		video = (Uint32*)malloc(x_res * y_res * sizeof(Uint32));
+		
+		if (!video)
+			barf("Could not allocate video memory.");
+	}
 };
