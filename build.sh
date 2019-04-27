@@ -1,0 +1,1 @@
+c++ boss.cpp -o boss.o -std=c++11 `sdl2-config --cflags` `sdl2-config --libs` -Wall -Wextra -Wno-sign-compare && ./boss.o boss.cpp
