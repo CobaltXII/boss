@@ -97,4 +97,103 @@ void editor::raster(video_interface* vga) {
 		}
 	}
 }
+
+// Update a row.
+void editor::update(int row_index) {
+	// Reject non-existant rows.
+	if (row_index < 0) {
+		return;
+	} else if (row_index >= rows.size()) {
+		return;
+	}
+
+	// Do syntax highlighting.
+	if (highlight == hm_c) {
+		// Find out if the upper row is open.
+		bool upper_open = false;
+		if (row_index - 1 >= 0) {
+			upper_open = rows[row_index - 1].open;
+		}
+
+		unsigned int i = 0;
+		HI_c::tokenizer tokenizer(rows[row_index]);
+		for (;;) {
+			// Fetch the next token.
+			HI_c::token token = tokenizer.next(upper_open);
+			// Break if the end-of-file was encountered.
+			if (token.type == HI_c::tk_eof) {
+				break;
+			}
+			// Color the segment of the row represented by the last fetched
+			// token.
+			vga_color color = HI_c::token_to_color[token.type];
+			for (unsigned int j = 0; j < token.text.length(); j++) {
+				if (i < rows[row_index].size()) {
+					rows[row_index][i++].fg = color;
+				}
+			}
+		}
+
+		// Remember if the row was closed or open before doing syntax
+		// highlighting.
+		bool open = rows[row_index].open;
+
+		// Mark the row as open if the tokenizer was marked as open.
+		rows[row_index].open = tokenizer.open;
+
+		// If the row's length is zero, set the row's state to to the state of
+		// the upper row.
+		if (rows[row_index].size() == 0) {
+			rows[row_index].open = upper_open;
+		}
+
+		// If the row was closed or opened, update the following row.
+		if (rows[row_index].open != open) {
+			update(row_index + 1);
+		}
+	} else if (highlight == hm_cpp) {
+		// Find out if the upper row is open.
+		bool upper_open = false;
+		if (row_index - 1 >= 0) {
+			upper_open = rows[row_index - 1].open;
+		}
+
+		unsigned int i = 0;
+		HI_cpp::tokenizer tokenizer(rows[row_index]);
+		for (;;) {
+			// Fetch the next token.
+			HI_cpp::token token = tokenizer.next(upper_open);
+			// Break if the end-of-file was encountered.
+			if (token.type == HI_cpp::tk_eof) {
+				break;
+			}
+			// Color the segment of the row represented by the last fetched
+			// token.
+			vga_color color = HI_cpp::token_to_color[token.type];
+			for (unsigned int j = 0; j < token.text.length(); j++) {
+				if (i < rows[row_index].size()) {
+					rows[row_index][i++].fg = color;
+				}
+			}
+		}
+
+		// Remember if the row was closed or open before doing syntax
+		// highlighting.
+		bool open = rows[row_index].open;
+
+		// Mark the row as open if the tokenizer was marked as open.
+		rows[row_index].open = tokenizer.open;
+
+		// If the row's length is zero, set the row's state to to the state of
+		// the upper row.
+		if (rows[row_index].size() == 0) {
+			rows[row_index].open = upper_open;
+		}
+
+		// If the row was closed or opened, update the following row.
+		if (rows[row_index].open != open) {
+			update(row_index + 1);
+		}
+	}
+}
 }
