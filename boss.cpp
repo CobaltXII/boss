@@ -528,19 +528,19 @@ void editor::render() {
 		}
 	}
 
+	// Find the real cursor X position. The cursor_x variable cannot be relied
+	// on because of wide characters (like tabs).
+	int real_cursor_x = 0;
+	for (int i = 0; i < rows[cursor_y].size() && i < cursor_x; i++) {
+		if (rows[cursor_y][i].ascii == '\t') {
+			real_cursor_x = (real_cursor_x / 4) * 4 + 4;
+		} else {
+			real_cursor_x++;
+		}
+	}
+
 	// Draw the cursor if the blink timer allows it.
 	if ((SDL_GetTicks() - motion_tick) % 1000 < 500) {
-		// Find the real cursor X position. The cursor_x variable cannot be
-		// relied on because of wide characters (like tabs).
-		int real_cursor_x = 0;
-		for (int i = 0; i < rows[cursor_y].size() && i < cursor_x; i++) {
-			if (rows[cursor_y][i].ascii == '\t') {
-				real_cursor_x = (real_cursor_x / 4) * 4 + 4;
-			} else {
-				real_cursor_x++;
-			}
-		}
-
 		// Draw the cursor.
 		word(
 			real_cursor_x - scroll_x + 8,
@@ -572,7 +572,7 @@ void editor::render() {
 	// Print the line and column numbers.
 	std::stringstream status_stream;
 	status_stream << "Ln " << cursor_y + 1 << "/" << rows.size() << ", ";
-	status_stream << "Col " << cursor_x + 1;
+	status_stream << "Col " << real_cursor_x + 1;
 	std::string status = status_stream.str();
 	for (unsigned int i = 0; i < status.size(); i++) {
 		glyph glyph = {
