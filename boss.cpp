@@ -20,6 +20,10 @@
 
 #include <SDL.h>
 
+#ifdef COBALTXII
+#define LAZY_MAN_NTSC
+#endif
+
 #include "extras.hpp"
 #include "mario.hpp"
 #include "glyph.hpp"
@@ -611,8 +615,13 @@ int main(int argc, char** argv) {
 		exit(-1);
 	}
 
+	#ifdef COBALTXII
+	// Create an editor.
+	editor boss = editor(4096 / 32, 2304 / 32 - 8);
+	#else
 	// Create an editor.
 	editor boss = editor(90, 100);
+	#endif
 
 	// Parse the filename.
 	boss.filename = std::string(argv[1]);
@@ -667,7 +676,9 @@ int main(int argc, char** argv) {
 			}
 			// Resize the window to fit the row.
 			if (length + 10 > boss.vga_text_mode_x_res) {
+				#ifndef COBALTXII
 				boss.vga_text_mode_x_res = length + 10;
+				#endif
 			}
 		}
 	} else {
@@ -683,7 +694,12 @@ int main(int argc, char** argv) {
 	video_interface adapter = video_interface(
 		"BOSS",
 		boss.vga_text_mode_x_res * boss.vga_001_x_res,
-		boss.vga_text_mode_y_res * boss.vga_001_y_res
+		boss.vga_text_mode_y_res * boss.vga_001_y_res,
+		#ifdef COBALTXII
+		2
+		#else
+		1
+		#endif
 	);
 
 	// Update all rows.
@@ -740,6 +756,12 @@ int main(int argc, char** argv) {
 			// Save the video buffer as an image.
 			adapter.save_bmp("export_" + filename.str() + ".bmp");
 		}
+
+		#ifdef LAZY_MAN_NTSC
+		// Apply a completely fake NTSC filter.
+		adapter.ntsc();
+		#endif
+
 		// Push the video buffer to the video card.
 		adapter.push();
 
