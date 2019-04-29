@@ -10,9 +10,14 @@ public:
 	// Dimensions of the SDL_Window*.
 	int x_res;
 	int y_res;
-	
+
 	// Video memory pointer.
 	Uint32* video = NULL;
+
+	#ifdef LAZY_MAN_NTSC
+	// Video memory pointer.
+	Uint32* real_video = NULL;
+	#endif
 
 	// Quit.
 	void quit() {
@@ -42,6 +47,67 @@ public:
 			video[y * x_res + x] = pixel;
 		}
 	}
+
+	#ifdef LAZY_MAN_NTSC
+	// Apply a completely fake NTSC filter.
+	void ntsc() {
+		#define NTSC_RGB(r, g, b) ((Uint32)((Uint8)(r) << 16 | \
+											(Uint8)(g) << 8 | \
+											(Uint8)(b)))
+
+		#define NTSC_R(x) ((Uint8)((Uint32)x >> 16))
+		#define NTSC_G(x) ((Uint8)((Uint32)x >> 8))
+		#define NTSC_B(x) ((Uint8)((Uint32)x))
+
+		#define NTSC_MIN(x, y) ((x) < (y) ? (x) : (y))
+		#define NTSC_MAX(x, y) ((x) > (y) ? (x) : (y))
+
+		#define NTSC_CLAMP(x) (NTSC_MIN(NTSC_MAX((x), 0), 255))
+		
+		memcpy(real_video, video, x_res * y_res * sizeof(Uint32));
+
+		for (int j = 0; j < y_res; j++)
+		for (int i = 0; i < x_res; i++) {
+			Uint32 source = video[j * x_res + i];
+			int source_r = NTSC_R(source) / 2;
+			int source_g = NTSC_G(source) / 2;
+			int source_b = NTSC_B(source) / 2;
+			if (i > 0) {
+				Uint32 dest = real_video[j * x_res + (i - 1)];
+				int dest_r = NTSC_R(dest);
+				int dest_g = NTSC_G(dest);
+				int dest_b = NTSC_B(dest);
+				real_video[j * x_res + (i - 1)] = NTSC_RGB(
+					NTSC_CLAMP(dest_r + source_r),
+					dest_g,
+					dest_b
+				);
+			}
+			if (i < x_res - 1) {
+				Uint32 dest = real_video[j * x_res + (i + 1)];
+				int dest_r = NTSC_R(dest);
+				int dest_g = NTSC_G(dest);
+				int dest_b = NTSC_B(dest);
+				real_video[j * x_res + (i + 1)] = NTSC_RGB(
+					dest_r,
+					NTSC_CLAMP(dest_g + source_g),
+					dest_b
+				);
+			}
+			if (j < y_res - 1) {
+				Uint32 dest = real_video[(j + 1) * x_res + i];
+				int dest_r = NTSC_R(dest);
+				int dest_g = NTSC_G(dest);
+				int dest_b = NTSC_B(dest);
+				real_video[(j + 1) * x_res + i] = NTSC_RGB(
+					dest_r,
+					dest_g,
+					NTSC_CLAMP(dest_b + source_b)
+				);
+			}
+		}
+	};
+	#endif
 	
 	// Default constructor.
 	video_interface(const char* title,
@@ -100,12 +166,25 @@ public:
 		
 		if (!video)
 			barf("Could not allocate video memory.");
+
+		#ifdef LAZY_MAN_NTSC
+		// Allocate video memory.
+		real_video = (Uint32*)malloc(x_res * y_res * sizeof(Uint32));
+		
+		if (!real_video)
+			barf("Could not allocate video memory.");
+		#endif
 	}
 	
 	// Video output function.
 	void push() {
+		#ifdef LAZY_MAN_NTSC
+		// Update the SDL_Texture*.
+		SDL_UpdateTexture(sdl_texture, NULL, real_video, x_res * sizeof(Uint32));
+		#else
 		// Update the SDL_Texture*.
 		SDL_UpdateTexture(sdl_texture, NULL, video, x_res * sizeof(Uint32));
+		#endif
 		// Copy the SDL_Texture* to the SDL_Renderer*.
 		SDL_RenderCopy(sdl_renderer, sdl_texture, NULL, NULL);
 		// Update the SDL_Renderer*.
