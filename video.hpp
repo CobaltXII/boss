@@ -46,7 +46,8 @@ public:
 	// Default constructor.
 	video_interface(const char* title,
 					int x_res,
-					int y_res)
+					int y_res,
+					unsigned int scale)
 	{
 		this->x_res = x_res;
 		this->y_res = y_res;
@@ -57,8 +58,8 @@ public:
 			// Let the operating system pick the window's position.
 			SDL_WINDOWPOS_UNDEFINED,
 			SDL_WINDOWPOS_UNDEFINED,
-			x_res,
-			y_res,
+			x_res * scale,
+			y_res * scale,
 			// This flag will cause pixels to be rendered correctly (without
 			// linear interpolation) on high-DPI displays.
 			SDL_WINDOW_ALLOW_HIGHDPI
