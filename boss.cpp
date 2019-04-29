@@ -725,7 +725,7 @@ int main(int argc, char** argv) {
 	// Start the VGA text mode emulator.
 	boss.raster(&adapter);
 	adapter.push();
-	
+
 	// Run the VGA text mode emulator.
 	for (;;) {
 		// Poll input.
@@ -736,6 +736,9 @@ int main(int argc, char** argv) {
 				adapter.quit();
 			} else if (e.type == SDL_KEYDOWN) {
 				boss.key(e);
+				if (e.key.keysym.sym == SDLK_ESCAPE) {
+					adapter.quit();
+				}
 			} else if (e.type == SDL_TEXTINPUT) {
 				boss.key(e);
 			}
